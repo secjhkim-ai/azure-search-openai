@@ -10,30 +10,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. 레포지토리 체크아웃
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2. Node.js 버전 설정 (frontend 요구 >=20)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
 
+      # 3. frontend 빌드
       - name: Install and build frontend
         working-directory: ./app/frontend
         run: |
           npm install
           npm run build
 
-      - name: Prepare backend deployment
+      # 4. backend 준비 (필요 시)
+      - name: Prepare backend
         working-directory: ./app/backend
         run: |
-          rm -rf ./static
-          mkdir -p ./static
-          cp -r ../frontend/dist/* ./static/
+          # 필요 시 backend 빌드 명령 추가
+          echo "Backend 준비 완료"
 
-      - name: Deploy frontend + backend to Azure Web App
+      # 5. frontend + backend 통합 패키지 경로 설정
+      - name: Set deployment package path
+        run: |
+          echo "PACKAGE_PATH=./app/frontend/build" >> $GITHUB_ENV
+
+      # 6. Azure Web App 배포 (Publish Profile 방식)
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'LawGIA'
           publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
-          package: ./app/backend
+          package: ${{ env.PACKAGE_PATH }}
