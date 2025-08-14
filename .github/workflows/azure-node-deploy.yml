@@ -1,0 +1,47 @@
+name: Deploy LawGIA Web App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      NODE_VERSION: 20
+
+    steps:
+      # 1. 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Node.js 설치
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # 3. Backend 의존성 설치 (필요시)
+      - name: Install backend dependencies
+        run: npm install
+        working-directory: ./app/backend
+
+      # 4. Frontend 의존성 설치
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: ./app/frontend
+
+      # 5. Frontend 빌드
+      - name: Build frontend
+        run: npm run build
+        working-directory: ./app/frontend
+
+      # 6. Azure Web App 배포
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: 'LawGIA'
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: './app/frontend/build'
